@@ -211,49 +211,54 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
       <Header />
-      <main className="flex-1 p-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-4xl font-bold">My Lists</h1>
-          <Button onClick={() => setIsCreateListModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Create List
-          </Button>
+      <main className="flex-1 p-4 flex justify-center">
+        <div className="w-full max-w-7xl bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-6 my-4">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-4xl font-bold text-gray-800">My Lists</h1>
+            <Button 
+              onClick={() => setIsCreateListModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Create List
+            </Button>
+          </div>
+
+          <div className="w-full">
+            <MasonryGrid columnWidth={350} gutter={16}>
+              {lists.map((list) => (
+                <TodoList
+                  key={list.id}
+                  {...list}
+                  isExpanded={expandedLists.has(list.id)}
+                  onToggleExpand={toggleListExpansion}
+                  onDeleteList={handleDeleteList}
+                  onDeleteTask={handleDeleteTask}
+                  onToggleTask={toggleTaskCompletion}
+                  onAddTask={setCreateTaskModalList}
+                  onRenameTask={handleRenameTask}
+                />
+              ))}
+            </MasonryGrid>
+          </div>
+
+          <Modal
+            isOpen={isCreateListModalOpen}
+            onClose={() => setIsCreateListModalOpen(false)}
+            onSubmit={handleCreateList}
+            title="Create New List"
+            placeholder="Enter list name..."
+          />
+
+          <Modal
+            isOpen={createTaskModalList !== null}
+            onClose={() => setCreateTaskModalList(null)}
+            onSubmit={handleCreateTask}
+            title="Create New Task"
+            placeholder="Enter task description..."
+          />
         </div>
-
-        <div className="w-full">
-          <MasonryGrid columnWidth={350} gutter={16}>
-            {lists.map((list) => (
-              <TodoList
-                key={list.id}
-                {...list}
-                isExpanded={expandedLists.has(list.id)}
-                onToggleExpand={toggleListExpansion}
-                onDeleteList={handleDeleteList}
-                onDeleteTask={handleDeleteTask}
-                onToggleTask={toggleTaskCompletion}
-                onAddTask={setCreateTaskModalList}
-                onRenameTask={handleRenameTask}
-              />
-            ))}
-          </MasonryGrid>
-        </div>
-
-        <Modal
-          isOpen={isCreateListModalOpen}
-          onClose={() => setIsCreateListModalOpen(false)}
-          onSubmit={handleCreateList}
-          title="Create New List"
-          placeholder="Enter list name..."
-        />
-
-        <Modal
-          isOpen={createTaskModalList !== null}
-          onClose={() => setCreateTaskModalList(null)}
-          onSubmit={handleCreateTask}
-          title="Create New Task"
-          placeholder="Enter task description..."
-        />
       </main>
     </div>
   )

@@ -51,8 +51,11 @@ export function TodoList({
   return (
     <div 
       ref={setNodeRef}
-      style={style}
-      className="bg-white shadow rounded-lg h-fit"
+      style={{
+        ...style,
+        width: '100%',
+      }}
+      className="bg-white shadow-lg rounded-lg h-fit border border-gray-200/50 hover:shadow-xl transition-shadow duration-200 overflow-hidden"
     >
       <div className="px-4 py-5 sm:p-6">
         <div className="flex justify-between items-center">
@@ -67,6 +70,7 @@ export function TodoList({
                 e.stopPropagation()
                 onToggleExpand(id)
               }}
+              className="hover:bg-gray-100"
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
@@ -78,7 +82,7 @@ export function TodoList({
               variant="ghost" 
               size="sm" 
               onClick={() => onDeleteList(id)}
-              className="text-gray-500 hover:text-gray-700"
+              className="text-gray-500 hover:text-red-600 hover:bg-red-50"
             >
               <X className="h-4 w-4" />
             </Button>

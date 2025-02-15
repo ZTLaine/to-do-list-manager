@@ -147,7 +147,8 @@ export function MasonryGrid({
           maxWidth: '90%',
           margin: '0 auto',
           minWidth: columnWidth,
-          overflow: 'hidden'
+          overflow: 'visible',
+          position: 'relative',
         }}
       >
         {React.Children.map(children, (child) => (
@@ -156,7 +157,8 @@ export function MasonryGrid({
             style={{ 
               width: getColumnWidth(),
               padding: `${gutter/2}px`,
-              maxWidth: '100%'
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
             {child}
@@ -180,7 +182,8 @@ export function MasonryGrid({
           maxWidth: '90%',
           margin: '0 auto',
           minWidth: columnWidth,
-          overflow: 'hidden'
+          overflow: 'visible',
+          position: 'relative',
         }}
       >
         <SortableContext 
@@ -196,7 +199,8 @@ export function MasonryGrid({
               style={{ 
                 width: getColumnWidth(),
                 padding: `${gutter/2}px`,
-                maxWidth: '100%'
+                maxWidth: '100%',
+                boxSizing: 'border-box',
               }}
             >
               {child}

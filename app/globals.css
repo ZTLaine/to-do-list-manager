@@ -47,6 +47,9 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --gradient-start: 26 35 126; /* #1a237e */
+    --gradient-mid: 49 27 146; /* #311b92 */
+    --gradient-end: 0 0 81; /* #000051 */
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -81,6 +84,9 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --gradient-start: 26 35 126;
+    --gradient-mid: 49 27 146;
+    --gradient-end: 0 0 81;
   }
   html, body {
     @apply overflow-x-hidden;
