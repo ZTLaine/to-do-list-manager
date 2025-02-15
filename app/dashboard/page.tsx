@@ -176,6 +176,32 @@ export default function Dashboard() {
     }
   };
 
+  const handleRenameTask = async (listId: string, taskId: string, newName: string) => {
+    const response = await fetch(`/api/task/${taskId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskName: newName }),
+    })
+    if (response.ok) {
+      setLists(
+        lists.map((list) => {
+          if (list.id === listId) {
+            return {
+              ...list,
+              tasks: list.tasks.map((task) => {
+                if (task.id === taskId) {
+                  return { ...task, taskName: newName }
+                }
+                return task
+              }),
+            }
+          }
+          return list
+        }),
+      )
+    }
+  }
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -207,6 +233,7 @@ export default function Dashboard() {
                 onDeleteTask={handleDeleteTask}
                 onToggleTask={toggleTaskCompletion}
                 onAddTask={setCreateTaskModalList}
+                onRenameTask={handleRenameTask}
               />
             ))}
           </MasonryGrid>

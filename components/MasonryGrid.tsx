@@ -1,6 +1,20 @@
 import * as React from "react"
 import { useEffect, useRef, useState } from 'react'
 import Masonry from 'masonry-layout'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable'
 
 interface MasonryInstance extends Masonry {
   layout: () => void;
@@ -11,12 +25,56 @@ interface MasonryGridProps {
   children: React.ReactNode
   columnWidth?: number
   gutter?: number
+  items?: { id: string }[]
+  onReorder?: (newOrder: { id: string }[]) => void
 }
 
-export function MasonryGrid({ children, columnWidth = 350, gutter = 16 }: MasonryGridProps) {
+export function MasonryGrid({ 
+  children, 
+  columnWidth = 350, 
+  gutter = 16,
+  items = [],
+  onReorder 
+}: MasonryGridProps) {
   const gridRef = useRef<HTMLDivElement>(null)
   const masonryRef = useRef<MasonryInstance | null>(null)
   const [containerWidth, setContainerWidth] = useState(0)
+  const [isClient, setIsClient] = useState(false)
+
+  // Add this useEffect for SSR
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Setup DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor)
+  )
+
+  // Handle drag end
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    
+    if (over && active.id !== over.id) {
+      const oldIndex = items.findIndex((item) => item.id === active.id)
+      const newIndex = items.findIndex((item) => item.id === over.id)
+      
+      const newOrder = arrayMove(items, oldIndex, newIndex)
+      onReorder?.(newOrder)
+    }
+  }
+
+  // // Initialize window size immediately
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined' && gridRef.current) {
+  //     setContainerWidth(gridRef.current.offsetWidth)
+  //   }
+  // }, [])
 
   // Handle resize
   useEffect(() => {
@@ -62,7 +120,6 @@ export function MasonryGrid({ children, columnWidth = 350, gutter = 16 }: Masonr
       }
     }
   }, [columnWidth, gutter])
-  To-do list app made with Next.Js using Typescript
 
   useEffect(() => {
     // Layout items when children change
@@ -79,31 +136,74 @@ export function MasonryGrid({ children, columnWidth = 350, gutter = 16 }: Masonr
     return `${100 / actualColumns}%`
   }
 
+  // Don't render DndContext on server
+  if (!isClient) {
+    return (
+      <div 
+        ref={gridRef} 
+        className="w-full"
+        style={{
+          width: '90%',
+          maxWidth: '90%',
+          margin: '0 auto',
+          minWidth: columnWidth,
+          overflow: 'hidden'
+        }}
+      >
+        {React.Children.map(children, (child) => (
+          <div 
+            className="grid-item space-y-2" 
+            style={{ 
+              width: getColumnWidth(),
+              padding: `${gutter/2}px`,
+              maxWidth: '100%'
+            }}
+          >
+            {child}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <div 
-      ref={gridRef} 
-      className="w-full px-4"
-      style={{
-        width: '100%',
-        maxWidth: '100%',
-        margin: '0 auto',
-        minWidth: columnWidth
-      }}
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragEnd={handleDragEnd}
     >
-      {/* Grid sizer element */}
-      <div className="grid-sizer" style={{ width: getColumnWidth() }} />
-      
-      {React.Children.map(children, (child) => (
-        <div 
-          className="grid-item space-y-2" 
-          style={{ 
-            width: getColumnWidth(),
-            padding: `${gutter/2}px`
-          }}
+      <div 
+        ref={gridRef} 
+        className="w-full"
+        style={{
+          width: '90%',
+          maxWidth: '90%',
+          margin: '0 auto',
+          minWidth: columnWidth,
+          overflow: 'hidden'
+        }}
+      >
+        <SortableContext 
+          items={items}
+          strategy={rectSortingStrategy}
         >
-          {child}
-        </div>
-      ))}
-    </div>
+          {/* Grid sizer element */}
+          <div className="grid-sizer" style={{ width: getColumnWidth() }} />
+          
+          {React.Children.map(children, (child) => (
+            <div 
+              className="grid-item space-y-2" 
+              style={{ 
+                width: getColumnWidth(),
+                padding: `${gutter/2}px`,
+                maxWidth: '100%'
+              }}
+            >
+              {child}
+            </div>
+          ))}
+        </SortableContext>
+      </div>
+    </DndContext>
   )
 } 

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button"
 import { ChevronUp, ChevronDown, Plus, X } from "lucide-react"
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { Task } from "@/components/Task"
 
 interface Task {
   id: string
@@ -19,6 +20,7 @@ interface TodoListProps {
   onDeleteTask: (listId: string, taskId: string) => void
   onToggleTask: (listId: string, taskId: string, isCompleted: boolean) => void
   onAddTask: (listId: string) => void
+  onRenameTask: (listId: string, taskId: string, newName: string) => void
 }
 
 export function TodoList({
@@ -31,6 +33,7 @@ export function TodoList({
   onDeleteTask,
   onToggleTask,
   onAddTask,
+  onRenameTask,
 }: TodoListProps) {
   const {
     attributes,
@@ -48,8 +51,12 @@ export function TodoList({
   return (
     <div 
       ref={setNodeRef}
-      style={style}
-      className="bg-white shadow rounded-lg h-fit w-full"
+      style={{
+        ...style,
+        maxWidth: '100%',
+        width: '100%'
+      }}
+      className="bg-white shadow rounded-lg h-fit"
     >
       <div className="px-4 py-5 sm:p-6">
         <div className="flex justify-between items-center">
@@ -80,33 +87,17 @@ export function TodoList({
         </div>
 
         {isExpanded && (
-          <div className="space-y-3">
+          <div className="space-y-3 transition-all duration-2000 ease-in-out">
             {tasks && tasks.length > 0 ? (
               tasks.map((task) => (
-                <div 
-                  key={task.id} 
-                  className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 group"
-                >
-                  <input
-                    type="checkbox"
-                    checked={task.isCompleted}
-                    onChange={(e) => onToggleTask(id, task.id, e.target.checked)}
-                    className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                  />
-                  <span
-                    className={`flex-grow ${task.isCompleted ? "line-through text-gray-500" : "text-gray-700"}`}
-                  >
-                    {task.taskName}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDeleteTask(id, task.id)}
-                    className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-700 p-1"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Task
+                  key={task.id}
+                  {...task}
+                  listId={id}
+                  onToggle={onToggleTask}
+                  onDelete={onDeleteTask}
+                  onRename={onRenameTask}
+                />
               ))
             ) : (
               <p className="text-gray-500 italic">No tasks yet</p>

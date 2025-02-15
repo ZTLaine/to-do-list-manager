@@ -94,6 +94,9 @@ body {
 @layer base {
   * {
     @apply border-border;
+    -webkit-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
   }
   body {
     @apply bg-background text-foreground;
