@@ -12,6 +12,12 @@ interface TaskProps {
   onRename: (listId: string, taskId: string, newName: string) => void
 }
 
+// Add this helper function at the module level
+const getStoredLineOffset = (taskId: string): number | null => {
+  const stored = sessionStorage.getItem(`task-line-offset-${taskId}`)
+  return stored ? Number(stored) : null
+}
+
 export function Task({
   id,
   taskName,
@@ -24,20 +30,40 @@ export function Task({
   const [isEditing, setIsEditing] = useState(false)
   const [editedName, setEditedName] = useState(taskName)
   const clickTimeoutRef = useRef<NodeJS.Timeout>()
+  const [lineOffset, setLineOffset] = useState(() => {
+    // If the task is completed, always try to get from storage first
+    if (isCompleted) {
+      const stored = getStoredLineOffset(id)
+      if (stored !== null) {
+        return stored
+      }
+      // If no stored value but task is completed, generate a new random offset
+      const newOffset = Math.floor(Math.random() * 12) - 6
+      sessionStorage.setItem(`task-line-offset-${id}`, newOffset.toString())
+      return newOffset
+    }
+    return 0
+  })
+  const [isAnimating, setIsAnimating] = useState(false)
 
   // Update editedName when taskName prop changes
   useEffect(() => {
     setEditedName(taskName)
   }, [taskName])
 
-  // Cleanup timeout on unmount
+  // Add an effect to handle completed state changes
   useEffect(() => {
-    return () => {
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current)
+    if (isCompleted) {
+      const stored = getStoredLineOffset(id)
+      if (stored === null) {
+        const newOffset = Math.floor(Math.random() * 12) - 6
+        setLineOffset(newOffset)
+        sessionStorage.setItem(`task-line-offset-${id}`, newOffset.toString())
+      } else {
+        setLineOffset(stored)
       }
     }
-  }, [])
+  }, [isCompleted, id])
 
   const handleClick = (e: React.MouseEvent) => {
     // Don't process if clicking button or input
@@ -52,8 +78,18 @@ export function Task({
 
     // Set new timeout for toggle
     clickTimeoutRef.current = setTimeout(() => {
+      if (!isCompleted) { // Only trigger animation when completing the task
+        const newOffset = Math.floor(Math.random() * 12) - 6
+        setLineOffset(newOffset)
+        setIsAnimating(true)
+        // Store the offset
+        sessionStorage.setItem(`task-line-offset-${id}`, newOffset.toString())
+      } else {
+        // Clean up storage when unchecking
+        sessionStorage.removeItem(`task-line-offset-${id}`)
+      }
       onToggle(listId, id, !isCompleted)
-    }, 200) // 200ms is typically a good duration for double-click detection
+    }, 200)
   }
 
   const handleDoubleClick = (e: React.MouseEvent) => {
@@ -93,16 +129,9 @@ export function Task({
   return (
     <div 
       onClick={handleClick}
-      className="flex items-start space-x-3 p-2 rounded-md hover:bg-gray-50 group cursor-pointer relative"
+      className="flex items-center justify-center p-2 rounded-md hover:bg-gray-50 group cursor-pointer relative min-h-[40px]"
     >
-      <input
-        type="checkbox"
-        checked={isCompleted}
-        onChange={(e) => onToggle(listId, id, e.target.checked)}
-        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-1.5 flex-shrink-0"
-        onClick={(e) => e.stopPropagation()}
-      />
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 text-center">
         {isEditing ? (
           <textarea
             value={editedName}
@@ -120,7 +149,7 @@ export function Task({
                 setEditedName(taskName)
               }
             }}
-            className="w-full bg-white border rounded px-2 py-1 resize-none overflow-hidden min-h-[24px] max-h-[200px] break-words hyphens-auto"
+            className="w-full text-center bg-white border rounded px-2 py-1 resize-none overflow-hidden min-h-[24px] max-h-[200px] break-words hyphens-auto"
             style={{
               wordWrap: 'break-word',
               overflowWrap: 'break-word'
@@ -139,19 +168,28 @@ export function Task({
         ) : (
           <span
             onDoubleClick={handleDoubleClick}
-            className={`block break-words hyphens-auto relative ${
-              isCompleted ? "text-gray-500" : "text-gray-700"
-            }`}
+            className={`inline-block break-words hyphens-auto relative 
+              ${isCompleted ? "text-gray-500" : "text-gray-700"}
+              max-w-full`}
+            style={{
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              hyphens: 'auto'
+            }}
           >
             {taskName}
             <span 
-              className={`absolute left-0 top-1/2 w-full h-[1.5px] bg-gradient-to-r from-gray-500 via-gray-500 to-transparent 
-                transform origin-left transition-transform duration-300 ease-out
+              className={`absolute w-[calc(100%+16px)] h-[3px] bg-gradient-to-r from-transparent via-gray-900 to-transparent 
+                transform origin-left transition-all duration-100 ease-out pointer-events-none
                 ${isCompleted ? 'scale-x-100' : 'scale-x-0'}`}
               style={{
                 transformOrigin: '0% 50%',
-                marginLeft: '-4px', // Starts slightly before text
-                width: 'calc(100% + 8px)', // Extends slightly after text
+                left: '-8px',
+                top: '50%',
+                transform: isCompleted 
+                  ? `scaleX(1) rotate(${Math.atan2(lineOffset * 2, 100)}rad)`
+                  : 'scaleX(0)',
+                opacity: isCompleted ? 1 : 0,
               }}
             />
           </span>
@@ -164,7 +202,7 @@ export function Task({
           e.stopPropagation()
           onDelete(listId, id)
         }}
-        className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-700 p-1 flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-gray-700 p-1 flex-shrink-0 absolute right-2"
       >
         <X className="h-4 w-4" />
       </Button>

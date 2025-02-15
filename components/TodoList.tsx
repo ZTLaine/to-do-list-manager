@@ -51,11 +51,7 @@ export function TodoList({
   return (
     <div 
       ref={setNodeRef}
-      style={{
-        ...style,
-        maxWidth: '100%',
-        width: '100%'
-      }}
+      style={style}
       className="bg-white shadow rounded-lg h-fit"
     >
       <div className="px-4 py-5 sm:p-6">
@@ -67,7 +63,10 @@ export function TodoList({
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => onToggleExpand(id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onToggleExpand(id)
+              }}
             >
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
