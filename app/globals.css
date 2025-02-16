@@ -47,9 +47,9 @@ body {
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --gradient-start: 26 35 126; /* #1a237e */
-    --gradient-mid: 49 27 146; /* #311b92 */
-    --gradient-end: 0 0 81; /* #000051 */
+    --gradient-start: 221.2 83.2% 53.3%;    /* #3b82f6 (blue-500) */
+    --gradient-mid: 262.1 83.3% 57.8%;      /* #8b5cf6 (violet-500) */
+    --gradient-end: 291.1 95.5% 58.7%;      /* #d946ef (pink-500) */
   }
   .dark {
     --background: 0 0% 3.9%;
@@ -84,9 +84,9 @@ body {
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-    --gradient-start: 26 35 126;
-    --gradient-mid: 49 27 146;
-    --gradient-end: 0 0 81;
+    --gradient-start: 217.2 91.2% 59.8%;    /* #4f46e5 (indigo-600) */
+    --gradient-mid: 271.5 91.7% 65.1%;      /* #7c3aed (violet-600) */
+    --gradient-end: 292.2 84.5% 60.6%;      /* #c026d3 (fuchsia-600) */
   }
   html, body {
     @apply overflow-x-hidden;

@@ -237,7 +237,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+    <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-1 p-4 flex justify-center">
         <div className="w-full max-w-7xl bg-white/80 backdrop-blur-sm rounded-lg shadow-xl p-6 my-4">

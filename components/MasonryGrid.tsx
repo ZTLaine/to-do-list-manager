@@ -15,6 +15,7 @@ import {
   arrayMove,
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
+import { useResizeObserver } from "@/hooks/use-resize-observer"
 
 interface MasonryInstance extends Masonry {
   layout: () => void;
@@ -70,33 +71,16 @@ export function MasonryGrid({
     }
   }
 
-  // // Initialize window size immediately
-  // useEffect(() => {
-  //   if (typeof window !== 'undefined' && gridRef.current) {
-  //     setContainerWidth(gridRef.current.offsetWidth)
-  //   }
-  // }, [])
-
-  // Handle resize
-  useEffect(() => {
-    const handleResize = () => {
-      if (gridRef.current) {
-        setContainerWidth(gridRef.current.offsetWidth)
-        if (masonryRef.current) {
-          masonryRef.current.layout()
-        }
+  // Use ResizeObserver to watch container size
+  useResizeObserver(gridRef, (entry) => {
+    const newWidth = entry.contentRect.width
+    if (newWidth !== containerWidth) {
+      setContainerWidth(newWidth)
+      if (masonryRef.current) {
+        masonryRef.current.layout()
       }
     }
-
-    // Initial measurement
-    handleResize()
-
-    // Add resize listener
-    window.addEventListener('resize', handleResize)
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  })
 
   useEffect(() => {
     // Small delay to ensure content is loaded
@@ -104,7 +88,7 @@ export function MasonryGrid({
       if (gridRef.current) {
         masonryRef.current = new Masonry(gridRef.current, {
           itemSelector: '.grid-item',
-          columnWidth: '.grid-sizer', // Use element for column width
+          columnWidth: '.grid-sizer',
           gutter: gutter,
           fitWidth: true,
           transitionDuration: '0.2s',

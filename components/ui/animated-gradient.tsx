@@ -1,76 +1,113 @@
 "use client"
 
 import * as React from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
+
+// Define color ranges (in HSL)
+const colorRanges = {
+  start: {
+    min: 200, // blue-ish
+    max: 150  // green-ish
+  },
+  mid: {
+    min: 262, // violet
+    max: 200  // blue
+  },
+  end: {
+    min: 291, // pink
+    max: 262  // violet
+  }
+}
 
 export function AnimatedGradient() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+  const [gradientPosition, setGradientPosition] = useState({ x: 0, y: 0 })
+  const [colorAngles, setColorAngles] = useState({
+    start: colorRanges.start.min,
+    mid: colorRanges.mid.min,
+    end: colorRanges.end.min
+  })
+  const isHovering = useRef(true)
+  const animationFrameRef = useRef<number>()
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    const x = (e.clientX / window.innerWidth) * 100
+    const y = (e.clientY / window.innerHeight) * 100
+    setMousePosition({ x, y })
+  }, [])
+
+  const handleMouseLeave = useCallback(() => {
+    isHovering.current = false
+  }, [])
+
+  const handleMouseEnter = useCallback(() => {
+    isHovering.current = true
+    // Restart animation if it was stopped
+    if (!animationFrameRef.current) {
+      updateGradient()
+    }
+  }, [])
+
+  // Function to update colors based on some factor (like time or mouse position)
+  const updateColors = useCallback(() => {
+    // Use time to create a smooth oscillation between min and max values
+    const oscillation = (Math.sin(Date.now() / 5000) + 1) / 2 // Value between 0 and 1
+
+    setColorAngles({
+      start: colorRanges.start.min + (colorRanges.start.max - colorRanges.start.min) * oscillation,
+      mid: colorRanges.mid.min + (colorRanges.mid.max - colorRanges.mid.min) * oscillation,
+      end: colorRanges.end.min + (colorRanges.end.max - colorRanges.end.min) * oscillation
+    })
+  }, [])
+
+  // Combined update function for both position and color
+  const updateGradient = useCallback(() => {
+    if (isHovering.current) {
+      // Update position
+      setGradientPosition(prev => ({
+        x: prev.x + (mousePosition.x - prev.x) * 0.01,
+        y: prev.y + (mousePosition.y - prev.y) * 0.01
+      }))
+      
+      // Update colors
+      updateColors()
+
+      animationFrameRef.current = requestAnimationFrame(updateGradient)
+    } else {
+      animationFrameRef.current = undefined
+    }
+  }, [mousePosition, updateColors])
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseenter', handleMouseEnter)
+    window.addEventListener('mouseleave', handleMouseLeave)
+    
+    updateGradient()
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseenter', handleMouseEnter)
+      window.removeEventListener('mouseleave', handleMouseLeave)
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [handleMouseMove, handleMouseEnter, handleMouseLeave, updateGradient])
+
   return (
     <div className="fixed inset-0 -z-10">
-      <svg
-        className="h-full w-full"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
+      <div
+        className="h-full w-full bg-gradient-to-r from-transparent to-transparent transition-all duration-1000 ease-out"
+        style={{
+          background: `radial-gradient(circle at ${gradientPosition.x}% ${gradientPosition.y}%, 
+            hsl(${colorAngles.start} 83.2% 53.3%) 0%,
+            hsl(${colorAngles.mid} 83.3% 57.8%) 35%,
+            hsl(${colorAngles.end} 95.5% 58.7%) 90%)`
+        }}
       >
-        <defs>
-          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" className="animate-gradient-shift-1">
-              <animate
-                attributeName="stop-color"
-                values="#1a237e;#311b92;#4a148c;#311b92;#1a237e"
-                dur="10s"
-                repeatCount="indefinite"
-              />
-            </stop>
-            <stop offset="100%" className="animate-gradient-shift-2">
-              <animate
-                attributeName="stop-color"
-                values="#000051;#1a237e;#000051;#1a237e;#000051"
-                dur="10s"
-                repeatCount="indefinite"
-              />
-            </stop>
-          </linearGradient>
-          <filter id="goo">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -8"
-              result="goo"
-            />
-          </filter>
-        </defs>
-        <g filter="url(#goo)">
-          <rect width="100%" height="100%" fill="url(#grad1)" />
-          <circle className="animate-blob" cx="50" cy="50" r="50" fill="#311b92" opacity="0.5">
-            <animate
-              attributeName="cx"
-              values="50;55;45;50"
-              dur="15s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="cy"
-              values="50;45;55;50"
-              dur="15s"
-              repeatCount="indefinite"
-            />
-          </circle>
-          <circle className="animate-blob" cx="50" cy="50" r="35" fill="#1a237e" opacity="0.5">
-            <animate
-              attributeName="cx"
-              values="50;45;55;50"
-              dur="15s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="cy"
-              values="50;55;45;50"
-              dur="15s"
-              repeatCount="indefinite"
-            />
-          </circle>
-        </g>
-      </svg>
+        <div className="absolute inset-0 backdrop-blur-[100px]" />
+      </div>
     </div>
   )
 } 
