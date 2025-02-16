@@ -19,6 +19,7 @@ import {
 interface MasonryInstance extends Masonry {
   layout: () => void;
   destroy: () => void;
+  reloadItems: () => void;
 }
 
 interface MasonryGridProps {
@@ -122,11 +123,15 @@ export function MasonryGrid({
   }, [columnWidth, gutter])
 
   useEffect(() => {
-    // Layout items when children change
-    if (masonryRef.current) {
-      masonryRef.current.layout()
-    }
-  }, [children])
+    const timer = setTimeout(() => {
+      if (masonryRef.current) {
+        masonryRef.current.reloadItems()
+        masonryRef.current.layout()
+      }
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [children, items])
 
   // Calculate column width based on container width
   const getColumnWidth = () => {

@@ -24,6 +24,8 @@ interface UserList {
   tasks: Task[]
 }
 
+const LIST_ORDER_KEY = 'todo-list-order';
+
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -55,7 +57,18 @@ export default function Dashboard() {
     const response = await fetch("/api/userlist")
     if (response.ok) {
       const data = await response.json()
-      setLists(data)
+      // Get saved order from localStorage
+      const savedOrder = localStorage.getItem(LIST_ORDER_KEY)
+      if (savedOrder) {
+        const orderIds = JSON.parse(savedOrder)
+        // Sort lists according to saved order
+        const sortedLists = [...data].sort((a, b) => {
+          return orderIds.indexOf(a.id) - orderIds.indexOf(b.id)
+        })
+        setLists(sortedLists)
+      } else {
+        setLists(data)
+      }
     }
   }
 
@@ -67,7 +80,12 @@ export default function Dashboard() {
     })
     if (response.ok) {
       const newList = await response.json()
-      setLists((currentLists) => [...currentLists, { ...newList, tasks: [] }])
+      setLists(currentLists => {
+        const updatedLists = [...currentLists, { ...newList, tasks: [] }]
+        const newOrder = updatedLists.map(list => list.id)
+        localStorage.setItem(LIST_ORDER_KEY, JSON.stringify(newOrder))
+        return updatedLists
+      })
       setIsCreateListModalOpen(false)
     }
   }
@@ -202,6 +220,14 @@ export default function Dashboard() {
     }
   }
 
+  const handleReorder = (newOrder: { id: string }[]) => {
+    const reorderedLists = newOrder.map(({id}) => 
+      lists.find(list => list.id === id)!
+    );
+    setLists([...reorderedLists]);
+    localStorage.setItem(LIST_ORDER_KEY, JSON.stringify(newOrder.map(item => item.id)));
+  }
+
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -226,7 +252,12 @@ export default function Dashboard() {
           </div>
 
           <div className="w-full">
-            <MasonryGrid columnWidth={350} gutter={16}>
+            <MasonryGrid 
+              columnWidth={350} 
+              gutter={16}
+              items={lists}
+              onReorder={handleReorder}
+            >
               {lists.map((list) => (
                 <TodoList
                   key={list.id}
